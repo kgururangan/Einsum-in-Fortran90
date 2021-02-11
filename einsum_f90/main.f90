@@ -1,6 +1,6 @@
 program main
 
-    use einsum_module, only: einsum444
+    use einsum_module, only: einsum444, einsum424, einsum422
     use blas_module, only: kgemm
     use tensor_type, only: tensor_t
     use permute_module, only: permute2
@@ -9,11 +9,12 @@ program main
 
     integer, parameter :: nu = 3, no = 2
     integer :: a, b, c, d, i, j, k, l, m, n, e, f
-    real :: Voovv(no,no,nu,nu), T(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no)
-    real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:)
+    real :: Voovv(no,no,nu,nu), T2(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no),&
+            T1(nu,no), Vvooo(nu,no,no,no)
+    real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:), Q(:,:), Q2(:,:)
     real :: xsum
 
-    call get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,T)
+    call get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T2,T1)
 
     print*,'++++++++++++++++TEST 1: Z(abef) = 0.5*V(mnef)T(abmn)++++++++++++++++'
 
@@ -27,7 +28,7 @@ program main
                     do m = 1,no
                         do n = 1,no
                             Z(a,b,e,f) = Z(a,b,e,f) + &
-                            0.5*Voovv(m,n,e,f)*T(a,b,m,n)
+                            0.5*Voovv(m,n,e,f)*T2(a,b,m,n)
                         end do
                     end do 
                     xsum = xsum + Z(a,b,e,f)
@@ -37,7 +38,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnef,abmn->abef',0.5*Voovv,T,Z2)
+    call einsum444('mnef,abmn->abef',0.5*Voovv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -63,7 +64,7 @@ program main
                     do m = 1,no
                         do e = 1,nu
                             Z(a,b,i,j) = Z(a,b,i,j) + &
-                            Vvoov(a,m,i,e)*T(b,e,j,m)
+                            Vvoov(a,m,i,e)*T2(b,e,j,m)
                         end do
                     end do 
                     xsum = xsum + Z(a,b,i,j)
@@ -135,7 +136,7 @@ program main
     ! print*,'BLAS contraction = ',xsum
     ! deallocate(Z)
 
-    call einsum444('amie,bejm->abij',Vvoov,T,Z2)
+    call einsum444('amie,bejm->abij',Vvoov,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -161,7 +162,7 @@ program main
                     do e = 1,nu
                         do f = 1,nu
                             Z(a,b,i,j) = Z(a,b,i,j) + &
-                            0.5*Vvvvv(a,b,e,f)*T(e,f,i,j)
+                            0.5*Vvvvv(a,b,e,f)*T2(e,f,i,j)
                         end do
                     end do 
                     xsum = xsum + Z(a,b,i,j)
@@ -171,7 +172,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('abfe,feij->abij',0.5*Vvvvv,T,Z2)
+    call einsum444('abfe,feij->abij',0.5*Vvvvv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -197,7 +198,7 @@ program main
                     do f = 1,nu
                         do n = 1,no
                             Z(a,m,i,e) = Z(a,m,i,e) + &
-                            Voovv(m,n,e,f)*T(a,f,i,n)
+                            Voovv(m,n,e,f)*T2(a,f,i,n)
                         end do
                     end do 
                     xsum = xsum + Z(a,m,i,e)
@@ -207,7 +208,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnef,afin->amie',Voovv,T,Z2)
+    call einsum444('mnef,afin->amie',Voovv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do m = 1,no
@@ -233,7 +234,7 @@ program main
                     do m = 1,no
                         do n = 1,no
                             Z(b,i,j,a) = Z(b,i,j,a) + &
-                            0.5*Voooo(m,n,i,j)*T(a,b,m,n)
+                            0.5*Voooo(m,n,i,j)*T2(a,b,m,n)
                         end do
                     end do 
                     xsum = xsum + Z(b,i,j,a)
@@ -243,7 +244,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnij,abmn->bija',0.5*Voooo,T,Z2)
+    call einsum444('mnij,abmn->bija',0.5*Voooo,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -257,13 +258,78 @@ program main
     print*,'EINSUM contraction error = ',xsum
     deallocate(Z,Z2)
 
+    print*,'++++++++++++++++TEST 6: Z(abij) = -V(amij)T(bm)++++++++++++++++'
+
+    allocate(Z(nu,nu,no,no),Z2(nu,nu,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    Z(a,b,i,j) = 0.0
+                    do m = 1,no
+                        Z(a,b,i,j) = Z(a,b,i,j) - &
+                        Vvooo(a,m,i,j)*T1(b,m)
+                    end do 
+                    xsum = xsum + Z(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum424('amij,bm->abij',-Vvooo,T1,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 7: Z(ai) = V(amie)T(em)++++++++++++++++'
+
+    allocate(Q(nu,no),Q2(nu,no))
+    xsum = 0.0
+    do a = 1,nu
+        do i = 1,no
+            Q(a,i) = 0.0
+            do e = 1,nu 
+                do m = 1,no 
+                    Q(a,i) = Q(a,i) + &
+                        Vvoov(a,m,i,e)*T1(e,m)
+                end do 
+            end do 
+            xsum = xsum + Q(a,i)
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum422('amie,em->ai',Vvoov,T1,Q2)
+    xsum = 0.0
+    do a = 1,nu
+        do i = 1,no
+                xsum = xsum + Q(a,i) - Q2(a,i)
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Q,Q2)
+
+
+
+
     contains 
 
-        subroutine get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,T)
+        subroutine get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T2,T1)
 
             integer, intent(in) :: no, nu
             real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), &
-                                 Voooo(no,no,no,no), T(nu,nu,no,no)
+                                 Vvooo(nu,no,no,no),Voooo(no,no,no,no), T2(nu,nu,no,no), T1(nu,no)
             integer :: a, b, i, j, m, e, f, n
             real :: r, xsum, ct
 
@@ -337,21 +403,51 @@ program main
             print*,xsum
 
             xsum = 0.0
+            ct = 10.0
+            do a = 1,nu
+                do m = 1,no
+                    do i = 1,no
+                        do j = 1,no 
+                            Vvooo(a,m,i,j) = ct 
+                            ct = ct + 1.0
+
+                            xsum = xsum + Vvooo(a,m,i,j)
+  
+                        end do 
+                    end do 
+                end do 
+            end do
+            print*,xsum
+
+            xsum = 0.0
             ct = 1.0
             do i = 1,no
                 do j = 1,no
                     do a = 1,nu
                         do b = 1,nu
 
-                            T(b,a,j,i) = ct
+                            T2(b,a,j,i) = ct
                             ct = ct + 1.0
 
-                            xsum = xsum + T(b,a,j,i)
+                            xsum = xsum + T2(b,a,j,i)
 
                         end do
                     end do
                 end do
             end do
+            print*,xsum
+
+            xsum = 0.0
+            ct = 1.0
+            do i = 1,no
+                do a = 1,nu 
+                    T1(a,i) = ct 
+                    ct = ct + 1.0 
+
+                    xsum = xsum + T1(a,i)
+
+                end do 
+            end do 
             print*,xsum
 
         end subroutine get_matrices
