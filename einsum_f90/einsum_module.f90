@@ -17,8 +17,9 @@ module einsum_module
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:), Cp(:,:,:,:)
             character :: s1(1:4), s2(1:4), s3(1:4)
-            integer :: i, j, k, l, idx, ct1, ct2, ct3, &
-                       idxA(1:4), idxB(1:4), idxC(1:4), idxC2(1:4)
+            integer :: i, j, k, l, idx, ct1, ct2, ct3, id, &
+                       idxA(1:4), idxB(1:4), idxC(1:4), idxC2(1:4),&
+                       idxA2(1:4), idxB2(1:4), idxC3(1:4)
             integer :: shapeA(1:4), shapeB(1:4), shapeC(1:4), n1, n2, n3
             integer :: temp1(1:4), temp2(1:4)
             real :: xsum
@@ -103,13 +104,21 @@ module einsum_module
             allocate(Cp(shapeC(1),shapeC(2),shapeC(3),shapeC(4)))
             allocate(A2(n1,n2),B2(n2,n3),C2(n1,n3))
 
-            !Ap = reshape(A,shape=shapeA,order=idxA)
-            call permute2(A,Ap,idxA)
+            ! find order of A
+            do i = 1,4
+                id = findloc(idxA,i,1)
+                idxA2(i) = id
+            end do
+            Ap = reshape(A,shape=shapeA,order=idxA2)
+            !call permute2(A,Ap,idxA)
 
-            ! There's a problem here with how B is being permuted or something...
-            !Bp = reshape(B,shape=shapeB,order=idxB) 
-
-            call permute2(B,Bp,idxB)
+            ! find order of B
+            do i = 1,4
+                id = findloc(idxB,i,1)
+                idxB2(i) = id
+            end do
+            Bp = reshape(B,shape=shapeB,order=idxB2) 
+            !call permute2(B,Bp,idxB)
 
             ! temp1 = shape(Bp)
             ! do i = 1,temp1(1)
