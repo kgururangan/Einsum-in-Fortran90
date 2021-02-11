@@ -1,7 +1,7 @@
 program main
 
     use einsum_module, only: einsum444, einsum424, einsum422, einsum222, einsum464, einsum264,&
-                             einsum466
+                             einsum466, einsum
     use blas_module, only: kgemm
     use tensor_type, only: tensor_t
     use permute_module, only: permute2
@@ -43,6 +43,7 @@ program main
     print*,'LOOP contraction = ',xsum
 
     call einsum444('mnef,abmn->abef',0.5*Voovv,T2,Z2)
+    !call einsum('mnef,abmn->abef',0.5*Voovv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu

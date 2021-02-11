@@ -3,16 +3,31 @@ module einsum_module
     !use tensor_type, only: tensor_t
     use blas_module, only: kgemm 
     use sort_module, only: argsort_int
-    use permute_module, only: permute2
-
-    ! required einsums up to triples:
-    ! 224 (outer product), 246 (outer product)
-    ! 442, 446
-    ! 462, 466
+    !use permute_module, only: permute2
 
     implicit none
 
     contains
+
+        subroutine einsum(str,A,B,C)
+
+            character(len=*), intent(in) :: str 
+            real, intent(in) :: A(..), B(..)
+            real, intent(out) :: C(..) 
+            integer :: rankA, rankB, rankC, rank_vec(1:3)
+
+            rankA = size(shape(A))
+            rankB = size(shape(B))
+            rankC = size(shape(C))
+
+            rank_vec = (/rankA, rankB, rankC/)
+
+            !if (all(rank_vec == (/4,4,4/))) then
+            !    call einsum444(str,A,B,C)
+            !end if 
+
+
+        end subroutine einsum
 
         subroutine einsum222(str,A,B,C)
 
