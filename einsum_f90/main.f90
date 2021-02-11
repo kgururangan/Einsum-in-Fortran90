@@ -512,6 +512,106 @@ program main
     end if 
     deallocate(W,W2)
 
+    print*,'++++++++++++++++TEST 13: Z(abcijk) = 0.5*V(abef)T(efcijk)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(W(nu,nu,nu,no,no,no),W2(nu,nu,nu,no,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no
+                            W(a,b,c,i,j,k) = 0.0
+                            do f = 1,nu
+                                do e = 1,nu 
+                                    W(a,b,c,i,j,k) = W(a,b,c,i,j,k) + &
+                                    0.5*Vvvvv(a,b,e,f) * T3(e,f,c,i,j,k)
+                                end do 
+                            end do 
+                            xsum = xsum + W(a,b,c,i,j,k)
+                        end do
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum466('abef,efcijk->abcijk',0.5*Vvvvv,T3,W2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no 
+                            xsum = xsum + W(a,b,c,i,j,k) - W2(a,b,c,i,j,k)
+                        end do 
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(W,W2)
+
+    print*,'++++++++++++++++TEST 14: Z(abcijk) = 0.5*V(mnij)T(abcmnk)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(W(nu,nu,nu,no,no,no),W2(nu,nu,nu,no,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no
+                            W(a,b,c,i,j,k) = 0.0
+                            do m = 1,no 
+                                do n = 1,no
+                                    W(a,b,c,i,j,k) = W(a,b,c,i,j,k) + &
+                                    0.5*Voooo(m,n,i,j) * T3(a,b,c,m,n,k)
+                                end do 
+                            end do 
+                            xsum = xsum + W(a,b,c,i,j,k)
+                        end do
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum466('mnij,abcmnk->abcijk',0.5*Voooo,T3,W2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no 
+                            xsum = xsum + W(a,b,c,i,j,k) - W2(a,b,c,i,j,k)
+                        end do 
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(W,W2)
+
 
     print*,'SUCCESSFULLY PASSED ',ct_test,'TESTS OUT OF ',num_test
 
