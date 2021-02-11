@@ -1,6 +1,7 @@
 program main
 
-    use einsum_module, only: einsum444, einsum424, einsum422, einsum222, einsum464
+    use einsum_module, only: einsum444, einsum424, einsum422, einsum222, einsum464, einsum264,&
+                             einsum466
     use blas_module, only: kgemm
     use tensor_type, only: tensor_t
     use permute_module, only: permute2
@@ -11,7 +12,7 @@ program main
     integer :: a, b, c, d, i, j, k, l, m, n, e, f, ct_test, num_test
     real :: Voovv(no,no,nu,nu), T2(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no),&
             T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu), T3(nu,nu,nu,no,no,no)
-    real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:), Q(:,:), Q2(:,:)
+    real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:), Q(:,:), Q2(:,:), W(:,:,:,:,:,:), W2(:,:,:,:,:,:)
     real :: xsum
 
     call get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T3,T2,T1)
@@ -418,6 +419,98 @@ program main
         print*,'FAILED' 
     end if 
     deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 11: Z(abij) = F(me)T(abeijm)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(Z(nu,nu,no,no),Z2(nu,nu,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    Z(a,b,i,j) = 0.0
+                    do e = 1,nu
+                        do m = 1,no
+                            Z(a,b,i,j) = Z(a,b,i,j) + &
+                            Fov(m,e) * T3(a,b,e,i,j,m)
+                        end do
+                    end do 
+                    xsum = xsum + Z(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum264('me,abeijm->abij',Fov,T3,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 12: Z(abcijk) = V(amie)T(ebcmjk)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(W(nu,nu,nu,no,no,no),W2(nu,nu,nu,no,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no
+                            W(a,b,c,i,j,k) = 0.0
+                            do m = 1,no 
+                                do e = 1,nu 
+                                    W(a,b,c,i,j,k) = W(a,b,c,i,j,k) + &
+                                    Vvoov(a,m,i,e) * T3(e,b,c,m,j,k)
+                                end do 
+                            end do 
+                            xsum = xsum + W(a,b,c,i,j,k)
+                        end do
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum466('amie,ebcmjk->abcijk',Vvoov,T3,W2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no 
+                            xsum = xsum + W(a,b,c,i,j,k) - W2(a,b,c,i,j,k)
+                        end do 
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(W,W2)
 
 
     print*,'SUCCESSFULLY PASSED ',ct_test,'TESTS OUT OF ',num_test
