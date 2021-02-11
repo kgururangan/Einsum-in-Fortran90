@@ -1,6 +1,6 @@
 program main
 
-    use einsum_module, only: einsum444, einsum424, einsum422, einsum222
+    use einsum_module, only: einsum444, einsum424, einsum422, einsum222, einsum464
     use blas_module, only: kgemm
     use tensor_type, only: tensor_t
     use permute_module, only: permute2
@@ -10,11 +10,11 @@ program main
     integer, parameter :: nu = 20, no = 6
     integer :: a, b, c, d, i, j, k, l, m, n, e, f, ct_test, num_test
     real :: Voovv(no,no,nu,nu), T2(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no),&
-            T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu)
+            T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu), T3(nu,nu,nu,no,no,no)
     real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:), Q(:,:), Q2(:,:)
     real :: xsum
 
-    call get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T2,T1)
+    call get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T3,T2,T1)
 
     ct_test = 0
     num_test = 0
@@ -375,17 +375,61 @@ program main
     end if 
     deallocate(Z,Z2)
 
+    print*,'++++++++++++++++TEST 10: Z(amij) = -0.5*V(mnef)T(aefijn)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(Z(nu,no,no,no),Z2(nu,no,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do m = 1,no
+            do i = 1,no
+                do j = 1,no
+                    Z(a,m,i,j) = 0.0
+                    do e = 1,nu
+                        do f = 1,nu 
+                            do n = 1,no
+                                Z(a,m,i,j) = Z(a,m,i,j) - &
+                                0.5*Voovv(m,n,e,f)*T3(a,e,f,i,j,n)
+                            end do 
+                        end do
+                    end do 
+                    xsum = xsum + Z(a,m,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum464('mnef,aefijn->amij',-0.5*Voovv,T3,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do m= 1,no
+            do i = 1,no
+                do j = 1,no
+                    xsum = xsum + Z(a,m,i,j) - Z2(a,m,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(Z,Z2)
+
 
     print*,'SUCCESSFULLY PASSED ',ct_test,'TESTS OUT OF ',num_test
 
     contains 
 
-        subroutine get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T2,T1)
+        subroutine get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T3,T2,T1)
 
             integer, intent(in) :: no, nu
             real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Fov(no,nu), &
                                  Foo(no,no), Fvv(nu,nu), Vvooo(nu,no,no,no),Voooo(no,no,no,no), &
-                                 T2(nu,nu,no,no), T1(nu,no)
+                                 T3(nu,nu,nu,no,no,no), T2(nu,nu,no,no), T1(nu,no)
             integer :: a, b, i, j, m, e, f, n
             real :: r, xsum, ct
 
@@ -509,6 +553,26 @@ program main
                 end do 
             end do
             print*,'|V(vooo)| = ',xsum
+
+            xsum = 0.0
+            ct = 0.5
+            do i = 1,no
+                do j = 1,no
+                    do k = 1,no 
+                        do a = 1,nu
+                            do b = 1,nu
+                                do c = 1,nu
+                                    T3(c,b,a,k,j,i) = ct
+                                    ct = ct + 1.0
+
+                                    xsum = xsum + T3(c,b,a,k,j,i)
+                                end do 
+                            end do
+                        end do
+                    end do 
+                end do
+            end do
+            print*,'|T3| = ',xsum
 
             xsum = 0.0
             ct = 1.0
