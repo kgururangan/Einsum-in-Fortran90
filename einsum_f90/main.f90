@@ -5,14 +5,16 @@ program main
 
     implicit none
 
+    real, parameter :: eps = 1e-15
     integer, parameter :: nu = 20, no = 6
     integer :: a, b, c, d, i, j, k, l, m, n, e, f, ct_test, num_test
     real :: Voovv(no,no,nu,nu), T2(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no),&
-            T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu), T3(nu,nu,nu,no,no,no)
+            T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu), T3(nu,nu,nu,no,no,no),&
+            Vvovv(nu,no,nu,nu)
     real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:), Q(:,:), Q2(:,:), W(:,:,:,:,:,:), W2(:,:,:,:,:,:)
     real :: xsum
 
-    call get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T3,T2,T1)
+    call get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,Vvovv,T3,T2,T1)
 
     ct_test = 0
     num_test = 0
@@ -51,7 +53,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -93,7 +95,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -135,7 +137,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -177,7 +179,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -219,7 +221,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -259,7 +261,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -293,7 +295,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -325,7 +327,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -365,7 +367,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -409,7 +411,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -451,7 +453,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -501,7 +503,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -551,7 +553,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -601,7 +603,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -649,7 +651,7 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -679,11 +681,11 @@ program main
     xsum = 0.0
     do a = 1,nu
         do i = 1,no
-                xsum = xsum + Q(a,i) - Q2(a,i)
+            xsum = xsum + Q(a,i) - Q2(a,i)
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -723,7 +725,47 @@ program main
         end do 
     end do 
     print*,'EINSUM contraction error = ',xsum
-    if (xsum == 0.0) then
+    if (abs(xsum) < eps) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 18: Z(amie) = V(amfe)T(fi)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(Z(nu,no,no,nu),Z2(nu,no,no,nu))
+    xsum = 0.0
+    do a = 1,nu
+        do m = 1,no
+            do i = 1,no
+                do e = 1,nu
+                    Z(a,m,i,e) = 0.0
+                    do f = 1,nu
+                        Z(a,m,i,e) = Z(a,m,i,e) + &
+                        Vvovv(a,m,f,e)*T1(f,i)
+                    end do 
+                    xsum = xsum + Z(a,m,i,e)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum('amfe,fi->amie',Vvovv,T1,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do m = 1,no
+            do i = 1,no
+                do e = 1,nu
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (abs(xsum) < eps) then
         print*,'PASSED'
         ct_test = ct_test + 1
     else 
@@ -736,11 +778,11 @@ program main
 
     contains 
 
-        subroutine get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,T3,T2,T1)
+        subroutine get_matrices(no,nu,Fov,Foo,Fvv,Voovv,Vvoov,Vvvvv,Voooo,Vvooo,Vvovv,T3,T2,T1)
 
             integer, intent(in) :: no, nu
-            real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Fov(no,nu), &
-                                 Foo(no,no), Fvv(nu,nu), Vvooo(nu,no,no,no),Voooo(no,no,no,no), &
+            real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Fov(no,nu),&
+                                 Foo(no,no), Fvv(nu,nu), Vvooo(nu,no,no,no),Voooo(no,no,no,no), Vvovv(nu,no,nu,nu),&
                                  T3(nu,nu,nu,no,no,no), T2(nu,nu,no,no), T1(nu,no)
             integer :: a, b, i, j, m, e, f, n
             real :: r, xsum, ct
@@ -865,6 +907,23 @@ program main
                 end do 
             end do
             print*,'|V(vooo)| = ',xsum
+
+            xsum = 0.0
+            ct = 12.0
+            do a = 1,nu
+                do m = 1,no
+                    do f = 1,nu
+                        do e = 1,nu
+                            Vvovv(a,m,f,e) = ct 
+                            ct = ct + 1.0
+
+                            xsum = xsum + Vvovv(a,m,f,e)
+  
+                        end do 
+                    end do 
+                end do 
+            end do
+            print*,'|V(vovv)| = ',xsum
 
             xsum = 0.0
             ct = 0.5
