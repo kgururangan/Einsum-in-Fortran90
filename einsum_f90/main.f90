@@ -7,18 +7,17 @@ program main
 
     implicit none
 
-    integer, parameter :: nu = 20, no = 5
+    integer, parameter :: nu = 3, no = 2
     integer :: a, b, c, d, i, j, k, l, m, n, e, f
-    real :: Voovv(no,no,nu,nu), T(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu)
-    real, allocatable :: Z(:,:,:,:)
-    real, allocatable :: Vp(:,:,:,:), Tp(:,:,:,:), V2(:,:), T2(:,:), Z2(:,:), Zp(:,:,:,:)
+    real :: Voovv(no,no,nu,nu), T(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no)
+    real, allocatable :: Z(:,:,:,:), Z2(:,:,:,:)
     real :: xsum
 
-    call get_matrices(no,nu,Voovv,Vvoov,Vvvvv,T)
+    call get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,T)
 
     print*,'++++++++++++++++TEST 1: Z(abef) = 0.5*V(mnef)T(abmn)++++++++++++++++'
 
-    allocate(Z(nu,nu,nu,nu))
+    allocate(Z(nu,nu,nu,nu),Z2(nu,nu,nu,nu))
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -37,26 +36,24 @@ program main
         end do 
     end do 
     print*,'LOOP contraction = ',xsum
-    deallocate(Z)
 
-    allocate(Z(nu,nu,nu,nu))
-    call einsum444('mnef,abmn->abef',0.5*Voovv,T,Z)
+    call einsum444('mnef,abmn->abef',0.5*Voovv,T,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
             do e = 1,nu
                 do f = 1,nu
-                    xsum = xsum + Z(a,b,e,f)
+                    xsum = xsum + Z(a,b,e,f) - Z2(a,b,e,f)
                 end do 
             end do 
         end do 
     end do 
-    print*,'EINSUM contraction = ',xsum
-    deallocate(Z)
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
 
     print*,'++++++++++++++++TEST 2: Z(abij) = V(amie)T(bejm)++++++++++++++++'
 
-    allocate(Z(nu,nu,no,no))
+    allocate(Z(nu,nu,no,no),Z2(nu,nu,no,no))
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -75,7 +72,6 @@ program main
         end do 
     end do 
     print*,'LOOP contraction = ',xsum
-    deallocate(Z)
 
     !!! order in reshape(SOURCE,SHAPE,ORDER) works very strangely...
     ! ORDER is an array defined such that if the RESHAPED array is taken with 
@@ -100,63 +96,62 @@ program main
     ! e.g. k = 1 -> SOURCE(ORDER_X(q)) = SOURCE(1) -> ORDER_X(q) = 1
     !               ORDER_X equals 1 at position 3 so q = 3
 
-    allocate(Z(nu,nu,no,no),Vp(nu,no,no,nu),Tp(no,nu,nu,no))
-    Vp = reshape(Vvoov,shape=(/nu,no,no,nu/),order=(/1,3,2,4/)) ! amie -> aime
-    Tp = reshape(T,shape=(/no,nu,nu,no/),order=(/3,2,4,1/)) ! bejm -> mebj
-    ! 4,2,1,3
-    ! do i = 1,2 
-    !     do j = 1,3   
-    !         do k = 1,3
-    !             do l = 1,2
-    !                 print*,'B(',i,j,k,l,') = ',Tp(i,j,k,l)
+    ! allocate(Z(nu,nu,no,no),Vp(nu,no,no,nu),Tp(no,nu,nu,no))
+    ! Vp = reshape(Vvoov,shape=(/nu,no,no,nu/),order=(/1,3,2,4/)) ! amie -> aime
+    ! Tp = reshape(T,shape=(/no,nu,nu,no/),order=(/3,2,4,1/)) ! bejm -> mebj
+    ! ! 4,2,1,3
+    ! ! do i = 1,2 
+    ! !     do j = 1,3   
+    ! !         do k = 1,3
+    ! !             do l = 1,2
+    ! !                 print*,'B(',i,j,k,l,') = ',Tp(i,j,k,l)
+    ! !             end do 
+    ! !         end do 
+    ! !     end do 
+    ! ! end do
+    ! allocate(V2(nu*no,nu*no),T2(nu*no,nu*no),Z2(nu*no,nu*no))
+    ! V2 = reshape(Vp,(/nu*no,nu*no/))
+    ! T2 = reshape(Tp,(/nu*no,nu*no/))
+    ! Z2 = kgemm(V2,T2)
+    ! ! xsum = 0.0
+    ! ! do i = 1,nu*no
+    ! !     do j = 1,nu*no 
+    ! !         xsum = xsum + Z2(i,j) 
+    ! !     end do 
+    ! ! end do 
+    ! ! print*,xsum 
+    ! Z = reshape(Z2,(/nu,no,nu,no/)) ! aibj 
+    ! Z = reshape(Z,(/nu,nu,no,no/),order=(/1,3,2,4/))
+    ! xsum = 0.0
+    ! do a = 1,nu
+    !     do b = 1,nu
+    !         do i = 1,no
+    !             do j = 1,no
+    !                 xsum = xsum + Z(a,b,i,j)
     !             end do 
     !         end do 
     !     end do 
-    ! end do
-    allocate(V2(nu*no,nu*no),T2(nu*no,nu*no),Z2(nu*no,nu*no))
-    V2 = reshape(Vp,(/nu*no,nu*no/))
-    T2 = reshape(Tp,(/nu*no,nu*no/))
-    Z2 = kgemm(V2,T2)
-    ! xsum = 0.0
-    ! do i = 1,nu*no
-    !     do j = 1,nu*no 
-    !         xsum = xsum + Z2(i,j) 
-    !     end do 
     ! end do 
-    ! print*,xsum 
-    Z = reshape(Z2,(/nu,no,nu,no/)) ! aibj 
-    Z = reshape(Z,(/nu,nu,no,no/),order=(/1,3,2,4/))
-    xsum = 0.0
-    do a = 1,nu
-        do b = 1,nu
-            do i = 1,no
-                do j = 1,no
-                    xsum = xsum + Z(a,b,i,j)
-                end do 
-            end do 
-        end do 
-    end do 
-    print*,'BLAS contraction = ',xsum
-    deallocate(Z)
+    ! print*,'BLAS contraction = ',xsum
+    ! deallocate(Z)
 
-    allocate(Z(nu,nu,no,no))
-    call einsum444('amie,bejm->abij',Vvoov,T,Z)
+    call einsum444('amie,bejm->abij',Vvoov,T,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
             do i = 1,no
                 do j = 1,no
-                    xsum = xsum + Z(a,b,i,j)
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
                 end do 
             end do 
         end do 
     end do 
-    print*,'EINSUM contraction = ',xsum
-    deallocate(Z)
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
 
     print*,'++++++++++++++++TEST 3: Z(abij) = 0.5*V(abef)T(efij)++++++++++++++++'
 
-    allocate(Z(nu,nu,no,no))
+    allocate(Z(nu,nu,no,no),Z2(nu,nu,no,no))
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -175,30 +170,101 @@ program main
         end do 
     end do 
     print*,'LOOP contraction = ',xsum
-    deallocate(Z)
 
-    allocate(Z(nu,nu,no,no))
-    call einsum444('abfe,feij->abij',0.5*Vvvvv,T,Z)
+    call einsum444('abfe,feij->abij',0.5*Vvvvv,T,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
             do i = 1,no
                 do j = 1,no
-                    xsum = xsum + Z(a,b,i,j)
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
                 end do 
             end do 
         end do 
     end do 
-    print*,'EINSUM contraction = ',xsum
-    deallocate(Z)
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 4: Z(amie) = V(mnef)T(afin)++++++++++++++++'
+
+    allocate(Z(nu,no,no,nu),Z2(nu,no,no,nu))
+    xsum = 0.0
+    do a = 1,nu
+        do m = 1,no
+            do i = 1,no
+                do e = 1,nu
+                    Z(a,m,i,e) = 0.0
+                    do f = 1,nu
+                        do n = 1,no
+                            Z(a,m,i,e) = Z(a,m,i,e) + &
+                            Voovv(m,n,e,f)*T(a,f,i,n)
+                        end do
+                    end do 
+                    xsum = xsum + Z(a,m,i,e)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum444('mnef,afin->amie',Voovv,T,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do m = 1,no
+            do i = 1,no
+                do e = 1,nu
+                    xsum = xsum + Z(a,m,i,e) - Z2(a,m,i,e)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
+
+    print*,'++++++++++++++++TEST 5: Z(bija) = 0.5*V(mnij)T(abmn)++++++++++++++++'
+
+    allocate(Z(nu,no,no,nu),Z2(nu,no,no,nu))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    Z(b,i,j,a) = 0.0
+                    do m = 1,no
+                        do n = 1,no
+                            Z(b,i,j,a) = Z(b,i,j,a) + &
+                            0.5*Voooo(m,n,i,j)*T(a,b,m,n)
+                        end do
+                    end do 
+                    xsum = xsum + Z(b,i,j,a)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum444('mnij,abmn->bija',0.5*Voooo,T,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    xsum = xsum + Z(b,i,j,a) - Z2(b,i,j,a)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    deallocate(Z,Z2)
 
     contains 
 
-        subroutine get_matrices(no,nu,Voovv,Vvoov,Vvvvv,T)
+        subroutine get_matrices(no,nu,Voovv,Vvoov,Vvvvv,Voooo,T)
 
             integer, intent(in) :: no, nu
-            real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), T(nu,nu,no,no)
-            integer :: a, b, i, j, m, e, f
+            real, intent(out) :: Voovv(no,no,nu,nu), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), &
+                                 Voooo(no,no,no,no), T(nu,nu,no,no)
+            integer :: a, b, i, j, m, e, f, n
             real :: r, xsum, ct
 
             xsum = 0.0
@@ -246,6 +312,23 @@ program main
                             ct = ct + 1.0
 
                             xsum = xsum + Vvvvv(f,e,b,a)
+  
+                        end do 
+                    end do 
+                end do 
+            end do
+            print*,xsum
+
+            xsum = 0.0
+            ct = 1.0
+            do m = 1,no
+                do n = 1,no
+                    do i = 1,no
+                        do j = 1,no 
+                            Voooo(j,i,n,m) = ct 
+                            ct = ct + 1.0
+
+                            xsum = xsum + Voooo(j,i,n,m)
   
                         end do 
                     end do 

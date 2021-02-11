@@ -91,14 +91,6 @@ module einsum_module
             shapeB = shapeB(idxB)
             shapeC = shapeC(idxC)
 
-            ! print*,'n1 = ',n1,'n2 = ',n2,'n3 = ',n3
-            ! print*,'idxA = ',idxA
-            ! print*,'shapeA = ',shapeA
-            ! print*,'idxB = ',idxB
-            ! print*,'shapeB = ',shapeB
-            ! print*,'idxC = ',idxC
-            ! print*,'shapeC = ',shapeC
-
             allocate(Ap(shapeA(1),shapeA(2),shapeA(3),shapeA(4)))
             allocate(Bp(shapeB(1),shapeB(2),shapeB(3),shapeB(4)))
             allocate(Cp(shapeC(1),shapeC(2),shapeC(3),shapeC(4)))
@@ -110,7 +102,6 @@ module einsum_module
                 idxA2(i) = id
             end do
             Ap = reshape(A,shape=shapeA,order=idxA2)
-            !call permute2(A,Ap,idxA)
 
             ! find order of B
             do i = 1,4
@@ -118,25 +109,23 @@ module einsum_module
                 idxB2(i) = id
             end do
             Bp = reshape(B,shape=shapeB,order=idxB2) 
-            !call permute2(B,Bp,idxB)
-
-            ! temp1 = shape(Bp)
-            ! do i = 1,temp1(1)
-            !     do j = 1,temp1(2)
-            !         do k = 1,temp1(3)
-            !             do l = 1,temp1(4)
-            !                 print*,'B(',i,j,k,l,') = ',Bp(i,j,k,l)
-            !             end do 
-            !         end do
-            !     end do 
-            ! end do  
 
             A2 = reshape(Ap,shape=(/n1,n2/))
             B2 = reshape(Bp,shape=(/n2,n3/))
             C2 = kgemm(A2,B2)
-            Cp = reshape(C2,shape=shapeC)
+
+            ! Cp = reshape(C2,shape=shapeC)
+            ! idxC2 = argsort_int(idxC)
+            ! C = reshape(Cp,shape=shapeC(idxC2),order=idxC2)
+
             idxC2 = argsort_int(idxC)
-            C = reshape(Cp,shape=shapeC(idxC2),order=idxC2)
+            ! find order of C
+            do i = 1,4
+                id = findloc(idxC2,i,1)
+                idxC3(i) = id
+            end do
+            C = reshape(C2,shape=shapeC(idxC2),order=idxC3)
+            
 
 
         deallocate(Ap,Bp,A2,B2,C2)
