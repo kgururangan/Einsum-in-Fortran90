@@ -22,18 +22,43 @@ module einsum_module
 
             rank_vec = (/rankA, rankB, rankC/)
 
-            !if (all(rank_vec == (/4,4,4/))) then
-            !    call einsum444(str,A,B,C)
-            !end if 
+            if (all(rank_vec == (/4,4,4/))) then
+               call einsum444(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
 
+            if (all(rank_vec == (/4,2,4/))) then
+               call einsum424(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
 
+            if (all(rank_vec == (/4,2,2/))) then
+               call einsum422(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
+
+            if (all(rank_vec == (/2,2,2/))) then
+               call einsum222(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
+
+            if (all(rank_vec == (/4,6,4/))) then
+               call einsum464(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
+
+            if (all(rank_vec == (/2,6,4/))) then
+               call einsum264(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
+
+            if (all(rank_vec == (/4,6,6/))) then
+               call einsum466(str,A,shape(A),B,shape(B),C,shape(C))
+            end if 
+
+            
         end subroutine einsum
 
-        subroutine einsum222(str,A,B,C)
+        subroutine einsum222(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:9)
-            real, intent(in) :: A(:,:), B(:,:)
-            real, intent(out) :: C(:,:)
+            integer, intent(in) :: szA(1:2), szB(1:2), szC(1:2)
+            real, intent(in) :: A(szA(1),szA(2)), B(szB(1),szB(2))
+            real, intent(out) :: C(szC(1),szC(2))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:), Bp(:,:), Cp(:,:)
             character :: s1(1:2), s2(1:2), s3(1:2)
@@ -135,11 +160,12 @@ module einsum_module
 
         end subroutine einsum222
 
-        subroutine einsum264(str,A,B,C)
+        subroutine einsum264(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:15)
-            real, intent(in) :: A(:,:), B(:,:,:,:,:,:)
-            real, intent(out) :: C(:,:,:,:)
+            integer, intent(in) :: szA(1:2), szB(1:6), szC(1:4)
+            real, intent(in) :: A(szA(1),szA(2)), B(szB(1),szB(2),szB(3),szB(4),szB(5),szB(6))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:), Bp(:,:,:,:,:,:), Cp(:,:,:,:)
             character :: s1(1:2), s2(1:6), s3(1:4)
@@ -241,11 +267,12 @@ module einsum_module
 
         end subroutine einsum264
 
-        subroutine einsum422(str,A,B,C)
+        subroutine einsum422(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:11)
-            real, intent(in) :: A(:,:,:,:), B(:,:)
-            real, intent(out) :: C(:,:)
+            integer, intent(in) :: szA(1:4), szB(1:2), szC(1:2)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2))
+            real, intent(out) :: C(szC(1),szC(2))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:), Cp(:,:)
             character :: s1(1:4), s2(1:2), s3(1:2)
@@ -347,11 +374,12 @@ module einsum_module
 
         end subroutine einsum422
 
-        subroutine einsum424(str,A,B,C)
+        subroutine einsum424(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:13)
-            real, intent(in) :: A(:,:,:,:), B(:,:)
-            real, intent(out) :: C(:,:,:,:)
+            integer, intent(in) :: szA(1:4), szB(1:2), szC(1:4)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:), Cp(:,:,:,:)
             character :: s1(1:4), s2(1:2), s3(1:4)
@@ -453,11 +481,12 @@ module einsum_module
 
         end subroutine einsum424
 
-        subroutine einsum444(str,A,B,C)
+        subroutine einsum444(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:15)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:)
-            real, intent(out) :: C(:,:,:,:)
+            integer, intent(in) :: szA(1:4), szB(1:4), szC(1:4)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:), Cp(:,:,:,:)
             character :: s1(1:4), s2(1:4), s3(1:4)
@@ -563,11 +592,12 @@ module einsum_module
 
         end subroutine einsum444
 
-        subroutine einsum442(str,A,B,C)
+        subroutine einsum442(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:13)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:)
-            real, intent(out) :: C(:,:)
+            integer, intent(in) :: szA(1:4), szB(1:4), szC(1:2)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4))
+            real, intent(out) :: C(szC(1),szC(2))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:), Cp(:,:)
             character :: s1(1:4), s2(1:4), s3(1:2)
@@ -673,11 +703,12 @@ module einsum_module
 
         end subroutine einsum442
 
-        subroutine einsum446(str,A,B,C)
+        subroutine einsum446(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:17)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:)
-            real, intent(out) :: C(:,:,:,:,:,:)
+            integer, intent(in) :: szA(1:4), szB(1:4), szC(1:6)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4),szC(5),szC(6))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:), Cp(:,:,:,:,:,:)
             character :: s1(1:4), s2(1:4), s3(1:6)
@@ -783,11 +814,12 @@ module einsum_module
 
         end subroutine einsum446
 
-        subroutine einsum462(str,A,B,C)
+        subroutine einsum462(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:15)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:,:,:)
-            real, intent(out) :: C(:,:)
+            integer, intent(in) :: szA(1:4), szB(1:6), szC(1:2)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4),szB(5),szB(6))
+            real, intent(out) :: C(szC(1),szC(2))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:,:,:), Cp(:,:)
             character :: s1(1:4), s2(1:6), s3(1:2)
@@ -893,11 +925,12 @@ module einsum_module
 
         end subroutine einsum462
 
-        subroutine einsum464(str,A,B,C)
+        subroutine einsum464(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:17)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:,:,:)
-            real, intent(out) :: C(:,:,:,:)
+            integer, intent(in) :: szA(1:4), szB(1:6), szC(1:4)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4),szB(5),szB(6))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:,:,:), Cp(:,:,:,:)
             character :: s1(1:4), s2(1:6), s3(1:4)
@@ -1003,11 +1036,12 @@ module einsum_module
 
         end subroutine einsum464
 
-        subroutine einsum466(str,A,B,C)
+        subroutine einsum466(str,A,szA,B,szB,C,szC)
 
             character, intent(in) :: str(1:19)
-            real, intent(in) :: A(:,:,:,:), B(:,:,:,:,:,:)
-            real, intent(out) :: C(:,:,:,:,:,:)
+            integer, intent(in) :: szA(1:4), szB(1:6), szC(1:6)
+            real, intent(in) :: A(szA(1),szA(2),szA(3),szA(4)), B(szB(1),szB(2),szB(3),szB(4),szB(5),szB(6))
+            real, intent(out) :: C(szC(1),szC(2),szC(3),szC(4),szC(5),szC(6))
             real, allocatable :: A2(:,:), B2(:,:), C2(:,:),&
                                  Ap(:,:,:,:), Bp(:,:,:,:,:,:), Cp(:,:,:,:,:,:)
             character :: s1(1:4), s2(1:6), s3(1:6)

@@ -1,10 +1,7 @@
 program main
 
-    use einsum_module, only: einsum444, einsum424, einsum422, einsum222, einsum464, einsum264,&
-                             einsum466, einsum
+    use einsum_module, only:  einsum
     use blas_module, only: kgemm
-    use tensor_type, only: tensor_t
-    use permute_module, only: permute2
 
     implicit none
 
@@ -42,8 +39,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnef,abmn->abef',0.5*Voovv,T2,Z2)
-    !call einsum('mnef,abmn->abef',0.5*Voovv,T2,Z2)
+    call einsum('mnef,abmn->abef',0.5*Voovv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -85,7 +81,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('amie,bejm->abij',Vvoov,T2,Z2)
+    call einsum('amie,bejm->abij',Vvoov,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -127,7 +123,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('abfe,feij->abij',0.5*Vvvvv,T2,Z2)
+    call einsum('abfe,feij->abij',0.5*Vvvvv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -169,7 +165,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnef,afin->amie',Voovv,T2,Z2)
+    call einsum('mnef,afin->amie',Voovv,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do m = 1,no
@@ -211,7 +207,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum444('mnij,abmn->bija',0.5*Voooo,T2,Z2)
+    call einsum('mnij,abmn->bija',0.5*Voooo,T2,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -251,7 +247,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum424('amij,bm->abij',-Vvooo,T1,Z2)
+    call einsum('amij,bm->abij',-Vvooo,T1,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -289,7 +285,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum422('amie,em->ai',Vvoov,T1,Q2)
+    call einsum('amie,em->ai',Vvoov,T1,Q2)
     xsum = 0.0
     do a = 1,nu
         do i = 1,no
@@ -321,7 +317,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum222('mi,am->ai',Fov,T1,Q2)
+    call einsum('mi,am->ai',Fov,T1,Q2)
     xsum = 0.0
     do a = 1,nu
         do i = 1,no
@@ -357,7 +353,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum424('nmef,an->amef',-Voovv,T1,Z2)
+    call einsum('nmef,an->amef',-Voovv,T1,Z2)
     xsum = 0.0
     do a = 1,nu
         do m = 1,no
@@ -401,7 +397,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum464('mnef,aefijn->amij',-0.5*Voovv,T3,Z2)
+    call einsum('mnef,aefijn->amij',-0.5*Voovv,T3,Z2)
     xsum = 0.0
     do a = 1,nu
         do m= 1,no
@@ -443,7 +439,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum264('me,abeijm->abij',Fov,T3,Z2)
+    call einsum('me,abeijm->abij',Fov,T3,Z2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -489,7 +485,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum466('amie,ebcmjk->abcijk',Vvoov,T3,W2)
+    call einsum('amie,ebcmjk->abcijk',Vvoov,T3,W2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -539,7 +535,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum466('abef,efcijk->abcijk',0.5*Vvvvv,T3,W2)
+    call einsum('abef,efcijk->abcijk',0.5*Vvvvv,T3,W2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
@@ -589,7 +585,7 @@ program main
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum466('mnij,abcmnk->abcijk',0.5*Voooo,T3,W2)
+    call einsum('mnij,abcmnk->abcijk',0.5*Voooo,T3,W2)
     xsum = 0.0
     do a = 1,nu
         do b = 1,nu
