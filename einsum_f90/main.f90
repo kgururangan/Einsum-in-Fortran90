@@ -657,6 +657,80 @@ program main
     end if 
     deallocate(W,W2)
 
+    print*,'++++++++++++++++TEST 16: Z(ai) = F(me)T(aeim)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(Q(nu,no),Q2(nu,no))
+    xsum = 0.0
+    do a = 1,nu
+        do i = 1,no
+            Q(a,i) = 0.0
+            do m = 1,no 
+                do e = 1,nu
+                    Q(a,i) = Q(a,i) + &
+                        Fov(m,e)*T2(a,e,i,m)
+                end do 
+            end do 
+            xsum = xsum + Q(a,i)
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum('me,aeim->ai',Fov,T2,Q2)
+    xsum = 0.0
+    do a = 1,nu
+        do i = 1,no
+                xsum = xsum + Q(a,i) - Q2(a,i)
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(Q,Q2)
+
+    print*,'++++++++++++++++TEST 17: Z(abij) = -F(mi)T(abmj)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(Z(nu,nu,no,no),Z2(nu,nu,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    Z(a,b,i,j) = 0.0
+                    do m = 1,no
+                        Z(a,b,i,j) = Z(a,b,i,j) - &
+                        Foo(m,i)*T2(a,b,m,j)
+                    end do 
+                    xsum = xsum + Z(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum('mi,abmj->abij',-Foo,T2,Z2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do i = 1,no
+                do j = 1,no
+                    xsum = xsum + Z(a,b,i,j) - Z2(a,b,i,j)
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(Z,Z2)
+
 
     print*,'SUCCESSFULLY PASSED ',ct_test,'TESTS OUT OF ',num_test
 
