@@ -5,8 +5,8 @@ program main
 
     implicit none
 
-    real, parameter :: eps = 1e-15
-    integer, parameter :: nu = 20, no = 6
+    real, parameter :: eps = 1e-08
+    integer, parameter :: nu = 50, no = 10
     integer :: a, b, c, d, i, j, k, l, m, n, e, f, ct_test, num_test
     real :: Voovv(no,no,nu,nu), T2(nu,nu,no,no), Vvoov(nu,no,no,nu), Vvvvv(nu,nu,nu,nu), Voooo(no,no,no,no),&
             T1(nu,no), Vvooo(nu,no,no,no), Fov(no,nu), Foo(no,no), Fvv(nu,nu), T3(nu,nu,nu,no,no,no),&
@@ -18,6 +18,8 @@ program main
 
     ct_test = 0
     num_test = 0
+
+    print*,'PASS MEANS |ERROR| < ',eps
 
     print*,'++++++++++++++++TEST 1: Z(abef) = 0.5*V(mnef)T(abmn)++++++++++++++++'
     num_test = num_test + 1
@@ -303,7 +305,7 @@ program main
     end if 
     deallocate(Q,Q2)
 
-    print*,'++++++++++++++++TEST 8: Z(ai) = F(mi)T(am)++++++++++++++++'
+    print*,'++++++++++++++++TEST 8: Z(ai) = -F(mi)T(am)++++++++++++++++'
     num_test = num_test + 1
     allocate(Q(nu,no),Q2(nu,no))
     xsum = 0.0
@@ -311,15 +313,15 @@ program main
         do i = 1,no
             Q(a,i) = 0.0
             do m = 1,no 
-                Q(a,i) = Q(a,i) + &
-                    Fov(m,i)*T1(a,m)
+                Q(a,i) = Q(a,i) - &
+                    Foo(m,i)*T1(a,m)
             end do 
             xsum = xsum + Q(a,i)
         end do 
     end do 
     print*,'LOOP contraction = ',xsum
 
-    call einsum('mi,am->ai',Fov,T1,Q2)
+    call einsum('mi,am->ai',-Foo,T1,Q2)
     xsum = 0.0
     do a = 1,nu
         do i = 1,no
@@ -829,7 +831,9 @@ program main
                     do i = 1,no
                         do j = 1,no
 
-                            Voovv(j,i,b,a) = ct 
+                            !Voovv(j,i,b,a) = ct 
+                            call random_number(r) 
+                            Voovv(j,i,b,a) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Voovv(j,i,b,a)
@@ -846,7 +850,9 @@ program main
                 do m = 1,no
                     do i = 1,no
                         do e = 1,nu
-                            Vvoov(e,i,m,a) = ct 
+                            !Vvoov(e,i,m,a) = ct 
+                            call random_number(r)
+                            Vvoov(e,i,m,a) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Vvoov(e,i,m,a)
@@ -863,7 +869,9 @@ program main
                 do b = 1,nu
                     do e = 1,nu 
                         do f = 1,nu 
-                            Vvvvv(f,e,b,a) = ct 
+                            !Vvvvv(f,e,b,a) = ct 
+                            call random_number(r)
+                            Vvvvv(f,e,b,a) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Vvvvv(f,e,b,a)
@@ -880,7 +888,9 @@ program main
                 do n = 1,no
                     do i = 1,no
                         do j = 1,no 
-                            Voooo(j,i,n,m) = ct 
+                            !Voooo(j,i,n,m) = ct 
+                            call random_number(r)
+                            Voooo(j,i,n,m) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Voooo(j,i,n,m)
@@ -897,7 +907,9 @@ program main
                 do m = 1,no
                     do i = 1,no
                         do j = 1,no 
-                            Vvooo(a,m,i,j) = ct 
+                            !Vvooo(a,m,i,j) = ct 
+                            call random_number(r) 
+                            Vvooo(a,m,i,j) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Vvooo(a,m,i,j)
@@ -914,7 +926,9 @@ program main
                 do m = 1,no
                     do f = 1,nu
                         do e = 1,nu
-                            Vvovv(a,m,f,e) = ct 
+                            !Vvovv(a,m,f,e) = ct 
+                            call random_number(r)
+                            Vvovv(a,m,f,e) = r
                             ct = ct + 1.0
 
                             xsum = xsum + Vvovv(a,m,f,e)
@@ -933,7 +947,9 @@ program main
                         do a = 1,nu
                             do b = 1,nu
                                 do c = 1,nu
-                                    T3(c,b,a,k,j,i) = ct
+                                    call random_number(r)
+                                    !T3(c,b,a,k,j,i) = ct
+                                    T3(c,b,a,k,j,i) = r
                                     ct = ct + 1.0
 
                                     xsum = xsum + T3(c,b,a,k,j,i)
@@ -952,7 +968,9 @@ program main
                     do a = 1,nu
                         do b = 1,nu
 
-                            T2(b,a,j,i) = ct
+                            !T2(b,a,j,i) = ct
+                            call random_number(r)
+                            T2(b,a,j,i) = r 
                             ct = ct + 1.0
 
                             xsum = xsum + T2(b,a,j,i)
@@ -967,7 +985,9 @@ program main
             ct = 1.0
             do i = 1,no
                 do a = 1,nu 
-                    T1(a,i) = ct 
+                    !T1(a,i) = ct 
+                    call random_number(r)
+                    T1(a,i) = r
                     ct = ct + 1.0 
 
                     xsum = xsum + T1(a,i)
