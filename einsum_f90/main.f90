@@ -609,6 +609,54 @@ program main
     end if 
     deallocate(W,W2)
 
+    print*,'++++++++++++++++TEST 15: Z(abcijk) = F(ae)T(ebcijk)++++++++++++++++'
+    num_test = num_test + 1
+    allocate(W(nu,nu,nu,no,no,no),W2(nu,nu,nu,no,no,no))
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no
+                            W(a,b,c,i,j,k) = 0.0
+                            do e = 1,nu
+                                W(a,b,c,i,j,k) = W(a,b,c,i,j,k) + &
+                                Fvv(a,e) * T3(e,b,c,i,j,k)
+                            end do 
+                            xsum = xsum + W(a,b,c,i,j,k)
+                        end do
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'LOOP contraction = ',xsum
+
+    call einsum('ae,ebcijk->abcijk',Fvv,T3,W2)
+    xsum = 0.0
+    do a = 1,nu
+        do b = 1,nu
+            do c = 1,nu 
+                do i = 1,no
+                    do j = 1,no
+                        do k = 1,no 
+                            xsum = xsum + W(a,b,c,i,j,k) - W2(a,b,c,i,j,k)
+                        end do 
+                    end do
+                end do 
+            end do 
+        end do 
+    end do 
+    print*,'EINSUM contraction error = ',xsum
+    if (xsum == 0.0) then
+        print*,'PASSED'
+        ct_test = ct_test + 1
+    else 
+        print*,'FAILED' 
+    end if 
+    deallocate(W,W2)
+
 
     print*,'SUCCESSFULLY PASSED ',ct_test,'TESTS OUT OF ',num_test
 
